@@ -91,16 +91,6 @@ for the full per-example table.]*
   rates hold steady across Bengali and Hindi source documents, not just
   English
 
-## Why this matters for AI safety
-
-Faithfulness failures in retrieval-augmented systems are a small, measurable
-instance of a much larger problem in AI safety: verifying that a system's
-outputs are actually grounded in what it was given, rather than in what is
-merely plausible. As RAG systems are deployed in higher-stakes decision
-contexts, the gap between fluent and faithful becomes a safety property, not
-a quality-of-life one. This project grew directly out of building and
-hardening a production RAG system where that gap had operational
-consequences, not just cosmetic ones.
 
 ## Reproduce
 
