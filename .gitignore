@@ -1,0 +1,5 @@
+data/claims/
+data/scores/
+data/examples.jsonl
+__pycache__/
+*.pyc
