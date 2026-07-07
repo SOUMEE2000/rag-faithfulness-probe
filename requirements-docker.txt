@@ -1,0 +1,10 @@
+# CPU-only build for Docker.
+# Uses the PyTorch CPU wheel (~230 MB) instead of the default CUDA wheel (~2.3 GB).
+# The extra-index-url is only needed at image BUILD time.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.0+cpu
+transformers>=4.40.0
+datasets>=2.19.0
+ollama>=0.2.0
+pandas>=2.2.0
+tqdm>=4.66.0

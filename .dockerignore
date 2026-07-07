@@ -1,0 +1,26 @@
+# Runtime caches — live in bind-mounted host folders, not in the image
+data/
+results/
+notes/
+
+# Stray directory from repo scaffold
+{data,src,results,notes}/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Git history — not needed in image
+.git/
+.gitignore
+
+# Offline install scripts — not needed in image
+offline_install/
+
+# Transfer tarballs — large, not needed in image
+transfer/
+
+# Docs — not needed in image
+*.md
+PROJECT_PLAN.md

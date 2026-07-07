@@ -1,0 +1,62 @@
+# ── docker-compose.yml ────────────────────────────────────────────────────────
+# Two services: ollama (LLaMA server) + pipeline (Python evaluation code).
+#
+# Pinning the project name to "rag-fp" ensures named volumes are always called
+#   rag-fp_ollama-models  and  rag-fp_hf-cache
+# regardless of which directory the user runs "docker compose up" from.
+# This matters for the offline volume export/import bat scripts.
+
+name: rag-fp
+
+services:
+
+  # ── Ollama — LLaMA-3.1 inference server ────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama      # model weights live here
+    networks:
+      - rag-net
+    restart: unless-stopped
+    # Expose on host only if you want to call Ollama directly from outside Docker.
+    # Remove the ports block if that is not needed.
+    ports:
+      - "11434:11434"
+
+  # ── Pipeline — Python evaluation code ──────────────────────────────────────
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # "image:" doubles as the tag used by "docker save" in the export script.
+    image: rag-fp-pipeline:latest
+    volumes:
+      # Bind-mounts: results land on the host filesystem so you can read them
+      # after the container exits.
+      - ./data:/app/src/data
+      - ./results:/app/src/results
+      - ./notes:/app/src/notes
+      # Named volume: HuggingFace model cache (DeBERTa etc.)
+      # This volume is exported to transfer/hf-cache.tar during offline prep.
+      - hf-cache:/root/.cache/huggingface
+    environment:
+      # The ollama Python client reads OLLAMA_HOST to find the server.
+      - OLLAMA_HOST=http://ollama:11434
+      # Set to 1 in offline mode so transformers / datasets never try the network.
+      - TRANSFORMERS_OFFLINE=${TRANSFORMERS_OFFLINE:-0}
+      - HF_DATASETS_OFFLINE=${HF_DATASETS_OFFLINE:-0}
+    depends_on:
+      - ollama
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    driver: bridge
+
+volumes:
+  # Explicit names make the volumes portable across machines.
+  ollama-models:
+    name: rag-fp_ollama-models
+  hf-cache:
+    name: rag-fp_hf-cache

@@ -7,9 +7,15 @@ Fallback model if the above fails to load: microsoft/deberta-v2-xlarge-mnli.
 Premise = source_context. Hypothesis = claim.
 Label mapping: entailment -> supported, neutral -> unsupported,
 contradiction -> contradicted.
+
+NOTE: Forced to CPU (DEVICE = "cpu") so DeBERTa never competes with
+Ollama/LLaMA for GPU VRAM. On a 6 GB GPU, both cannot coexist in VRAM.
+CPU inference is ~1-3 sec/claim — acceptable for 200 examples.
 """
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+DEVICE = "cpu"  # Kept on CPU intentionally — see module docstring above
 
 MODEL_NAME_PRIMARY = "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli"
 MODEL_NAME_FALLBACK = "microsoft/deberta-v2-xlarge-mnli"
@@ -33,6 +39,7 @@ def _load_model():
         _model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME_FALLBACK)
         model_name_used = MODEL_NAME_FALLBACK
 
+    _model = _model.to(DEVICE)  # explicitly pin to CPU
     _model.eval()
     # id2label varies by checkpoint; normalize to our three buckets by
     # inspecting the label strings rather than assuming index order.
@@ -54,6 +61,8 @@ def score_claim_nli(source_context, claim):
     inputs = _tokenizer(
         source_context, claim, return_tensors="pt", truncation=True, max_length=512
     )
+    # Move inputs to the same device as the model (CPU)
+    inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
     with torch.no_grad():
         logits = _model(**inputs).logits
     probs = torch.softmax(logits, dim=-1)[0]
